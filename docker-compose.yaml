@@ -7,9 +7,4 @@ services:
     environment:
       POSTGRES_PASSWORD: password
     ports:
-      - "5432:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-
-volumes:
-  postgres_data:
+      - "6000:5432"
