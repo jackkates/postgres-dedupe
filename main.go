@@ -4,7 +4,9 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+	"math/rand"
 	"sync"
+	"time"
 
 	_ "github.com/lib/pq"
 )
@@ -13,6 +15,7 @@ func getDBConn() *sql.DB {
 	connStr := "user=postgres dbname=postgres sslmode=disable"
 	db, err := sql.Open("postgres", connStr)
 	if err != nil {
+		log.Println("db conn error")
 		log.Fatal(err)
 	}
 	return db
@@ -36,20 +39,30 @@ func clearTable() {
 
 func addTask(name string, number int) {
 	db := getDBConn()
-	_, err := db.Query("INSERT INTO tasks (name, number) VALUES ($1, $2)", name, number)
+	tx, err := db.Begin()
+	_, err = tx.Query("INSERT INTO tasks (name, number) VALUES ($1, $2)", name, number)
 	if err != nil {
-		log.Println(err)
+		fmt.Println("query error: ", err)
+	}
+	delay := rand.Intn(5)
+	time.Sleep(time.Duration(delay) * time.Second)
+	if rand.Float32() < 0.5 {
+		err = tx.Rollback()
+		fmt.Println("rollback task " + name)
+	} else {
+		err = tx.Commit()
+		if err != nil {
+			fmt.Println("commit error: ", err)
+		} else {
+			fmt.Println("finalized task " + name)
+		}
 	}
 }
 
-func addTasks() {
-	fmt.Println("start")
-	addTask("task1", 1)
-	fmt.Println("1")
-	addTask("task2", 2)
-	fmt.Println("2")
-	addTask("task3", 3)
-	fmt.Println("end")
+func addTasks(numTasks int) {
+	for i := 0; i < numTasks; i++ {
+		addTask(fmt.Sprintf("task_%d", i), i)
+	}
 }
 
 func main() {
@@ -58,12 +71,12 @@ func main() {
 
 	var wg sync.WaitGroup
 
-	for i := 0; i < 2; i++ {
+	for i := 0; i < 15; i++ {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
 			fmt.Println("adding task")
-			addTasks()
+			addTasks(10)
 		}()
 	}
 	wg.Wait()
