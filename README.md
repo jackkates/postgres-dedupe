@@ -10,3 +10,5 @@ To run:
 
 To filter for completed messages
 `go build && ./exactlyonce | grep -i "finalized"`
+
+There is also an execution trace in the traces/ directory. 
