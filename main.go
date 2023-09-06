@@ -12,6 +12,9 @@ import (
 	_ "github.com/lib/pq"
 )
 
+// Worker represents a consumer that takes in
+// messages and does processing on them. In this program it just
+// makes up the messages rather than receiving them externally.
 type Worker struct {
 	id     int
 	db     *sql.DB
@@ -108,7 +111,8 @@ func main() {
 	}
 
 	// For each worker, launch a thread to
-	// attempt to process messages.
+	// attempt to process messages and wait for
+	// all workers to finish.
 	for _, w := range workers {
 		wg.Add(1)
 		go func(w *Worker) {
